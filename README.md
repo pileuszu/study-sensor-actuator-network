@@ -1,100 +1,110 @@
-# Smart Sensor and Control System
+# 📡 Smart Sensor-Actuator Network (SSAN)
 
-This project implements a smart sensor and control system using Raspberry Pi GPIO for various sensors and actuators. The system consists of multiple connected components that communicate over TCP/IP sockets.
+![C](https://img.shields.io/badge/Language-C-00599C?style=flat-square&logo=c)
+![Platform](https://img.shields.io/badge/Platform-Raspberry%20Pi-C51A4A?style=flat-square&logo=raspberry-pi)
+![Linux](https://img.shields.io/badge/OS-Linux-FCC624?style=flat-square&logo=linux&logoColor=black)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-## Components
+A robust, real-time distributed system for sensor monitoring and actuator control using Raspberry Pi. This project implements a client-server architecture over TCP/IP to manage environmental data and trigger mechanical responses.
 
-### 1. Ultrasonic Distance Measurement System
-- **ultra_server.c**: Server that reads from ultrasonic distance sensors
-- **ultra_client.c**: Client that controls motors based on distance measurements
+---
 
-### 2. Water and Motion Detection System
-- **water_server.c**: Server that monitors water and motion sensors
-- **water_client.c**: Client that controls a water pump based on sensor readings
+## 🚀 Key Features
 
-## Features
-- Real-time distance measurement using ultrasonic sensors
-- Water level detection
-- Motion detection
-- PWM motor control
-- TCP/IP communication between sensor and actuator nodes
+- **Real-time Monitoring**: High-precision distance measurement and environmental sensing.
+- **Distributed Control**: Decoupled sensor (server) and actuator (client) logic via TCP/IP sockets.
+- **Multi-threaded Processing**: Concurrent sensor reading using POSIX threads.
+- **Hardware Integration**: Direct sysfs-based GPIO and PWM control for motors and pumps.
+- **Extensible Architecture**: Modular utility headers for networking, GPIO, and PWM.
 
-## Hardware Requirements
-- Raspberry Pi (2 or newer recommended)
-- Ultrasonic distance sensors
-- Water level sensors
-- Motion sensors
-- Servo/DC motors
-- Water pump
-- Appropriate wiring and circuitry
+---
 
-## Installation
+## 🏗️ System Architecture
 
-1. Clone the repository:
-```bash
-git clone https://github.com/pileuszu/sensor-actuator-network.git
-cd sensor-actuator-network
-```
+The system is divided into two primary subsystems, each following a **Producer-Consumer (Server-Client)** pattern:
 
-2. Compile the server and client programs:
-```bash
-gcc -o ultra_server ultra_server.c -lpthread
-gcc -o ultra_client ultra_client.c -lpthread
-gcc -o water_server water_server.c -lpthread
-gcc -o water_client water_client.c -lpthread
-```
+1.  **Ultrasonic Distance Subsystem**
+    *   **Server**: Samples dual ultrasonic sensors (HC-SR04) and broadcasts distance data.
+    *   **Client**: Receives data and adjusts motor speed/position via PWM.
+2.  **Water & Motion Subsystem**
+    *   **Server**: Monitors water level and PIR motion sensors.
+    *   **Client**: Triggers a water pump or auxiliary outputs based on environmental triggers.
 
-## Usage
+---
 
-### Ultrasonic System
-1. On the server Raspberry Pi:
-```bash
-./ultra_server 9090
-```
+## 📂 Project Structure
 
-2. On the client Raspberry Pi:
-```bash
-./ultra_client 127.0.0.1 9090
-```
-(Replace 127.0.0.1 with the server's IP address if running on different devices)
+| File | Description |
+| :--- | :--- |
+| `ultra_server.c` / `ultra_client.c` | Ultrasonic sensing and motor control logic. |
+| `water_server.c` / `water_client.c` | Water detection and pump control logic. |
+| `gpio_utils.h` | Low-level sysfs GPIO mapping and control. |
+| `network_utils.h` | Socket abstraction for TCP/IP communication. |
+| `pwm_utils.h` | Pulse Width Modulation control for servos/motors. |
+| `Makefile` | Build automation script. |
+
+---
+
+## 🔌 Hardware Configuration
+
+### 1. Ultrasonic System
+| Component | Pin (BCM) | Role |
+| :--- | :--- | :--- |
+| **Sensor 1** | Trig: 23 / Echo: 24 | Distance Input |
+| **Sensor 2** | Trig: 5 / Echo: 6 | Distance Input |
+| **Button** | 20 | Manual Override (Client) |
+| **Motor** | 21 (PWM) | Actuator (Client) |
+
+### 2. Water & Motion System
+| Component | Pin (BCM) | Role |
+| :--- | :--- | :--- |
+| **Water Sensor** | 23 | Level Input |
+| **Motion Sensor**| 26 | PIR Input |
+| **Pump** | 21 | Actuator (Client) |
+| **Aux Output** | 24 | Indicator (Client) |
+
+---
+
+## 🛠️ Build & Installation
+
+Ensure you have `gcc` and `make` installed on your Raspberry Pi.
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/pileuszu/study-sensor-actuator-network.git
+   cd study-sensor-actuator-network
+   ```
+
+2. **Compile the project**:
+   ```bash
+   make
+   ```
+
+---
+
+## 🖥️ Usage
+
+### Ultrasonic Distance System
+1. **Start Server** (on sensor node):
+   ```bash
+   ./ultra_server 9090
+   ```
+2. **Start Client** (on actuator node):
+   ```bash
+   ./ultra_client <SERVER_IP> 9090
+   ```
 
 ### Water & Motion System
-1. On the server Raspberry Pi:
-```bash
-./water_server 9091
-```
+1. **Start Server** (on sensor node):
+   ```bash
+   ./water_server 9091
+   ```
+2. **Start Client** (on actuator node):
+   ```bash
+   ./water_client <SERVER_IP> 9091
+   ```
 
-2. On the client Raspberry Pi:
-```bash
-./water_client 127.0.0.1 9091
-```
-(Replace 127.0.0.1 with the server's IP address if running on different devices)
+---
 
-## GPIO Pin Configuration
-
-### Ultrasonic Server
-- Ultrasonic Sensor 1: Trigger=GPIO23, Echo=GPIO24
-- Ultrasonic Sensor 2: Trigger=GPIO5, Echo=GPIO6
-
-### Water Server
-- Water Sensor: GPIO23
-- Motion Sensor: GPIO26
-
-### Ultrasonic Client
-- Button Input: GPIO20
-- Motor Output: GPIO21 (PWM)
-
-### Water Client
-- Button Input: GPIO20
-- Water Pump Output: GPIO21
-- Additional Output: GPIO24
-
-## System Architecture
-The system follows a client-server architecture:
-- Servers read data from sensors and send the measurements to clients
-- Clients control actuators based on the received sensor data
-- Communication happens over TCP/IP sockets
-- Each component runs in a separate thread for concurrent operation
-
-## License
-[MIT License](LICENSE) 
+## 📜 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
